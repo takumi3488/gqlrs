@@ -38,6 +38,10 @@ impl<T: InputType> InputType for Vec<T> {
         Value::List(self.iter().map(InputType::to_value).collect())
     }
 
+    fn federation_fields() -> Option<String> {
+        T::federation_fields()
+    }
+
     fn as_raw_value(&self) -> Option<&Self::RawValueType> {
         Some(self)
     }

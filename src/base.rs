@@ -217,6 +217,10 @@ impl<T: InputType> InputType for Box<T> {
         T::to_value(&self)
     }
 
+    fn federation_fields() -> Option<String> {
+        T::federation_fields()
+    }
+
     fn as_raw_value(&self) -> Option<&Self::RawValueType> {
         self.as_ref().as_raw_value()
     }
@@ -261,6 +265,10 @@ impl<T: InputType> InputType for Arc<T> {
 
     fn to_value(&self) -> ConstValue {
         T::to_value(&self)
+    }
+
+    fn federation_fields() -> Option<String> {
+        T::federation_fields()
     }
 
     fn as_raw_value(&self) -> Option<&Self::RawValueType> {

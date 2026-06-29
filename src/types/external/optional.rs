@@ -37,6 +37,10 @@ impl<T: InputType> InputType for Option<T> {
         }
     }
 
+    fn federation_fields() -> Option<String> {
+        T::federation_fields()
+    }
+
     fn as_raw_value(&self) -> Option<&Self::RawValueType> {
         match self {
             Some(value) => value.as_raw_value(),

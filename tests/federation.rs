@@ -4,6 +4,7 @@
 #![allow(dead_code)]
 #![allow(clippy::diverging_sub_expression)]
 
+use std::sync::Arc;
 use std::{collections::HashMap, convert::Infallible};
 
 use gqlrs::{
@@ -29,6 +30,22 @@ pub async fn test_nested_key() {
     assert_eq!(MyInputB::federation_fields().as_deref(), Some("{ v }"));
     assert_eq!(
         MyInputA::federation_fields().as_deref(),
+        Some("{ a b c { v } }")
+    );
+    assert_eq!(
+        Vec::<MyInputA>::federation_fields().as_deref(),
+        Some("{ a b c { v } }")
+    );
+    assert_eq!(
+        Option::<MyInputA>::federation_fields().as_deref(),
+        Some("{ a b c { v } }")
+    );
+    assert_eq!(
+        Box::<MyInputA>::federation_fields().as_deref(),
+        Some("{ a b c { v } }")
+    );
+    assert_eq!(
+        Arc::<MyInputA>::federation_fields().as_deref(),
         Some("{ a b c { v } }")
     );
 
@@ -69,6 +86,52 @@ pub async fn test_nested_key() {
                 {"__typename": "MyObj", "a": 1, "b": 2, "c": 3},
             ]
         })
+    );
+}
+
+#[tokio::test]
+pub async fn test_wrapped_input_object_key_fields_in_sdl() {
+    #[derive(InputObject)]
+    struct MyInputA {
+        a: i32,
+        b: MyInputB,
+    }
+
+    #[derive(InputObject)]
+    struct MyInputB {
+        v: i32,
+    }
+
+    #[derive(SimpleObject)]
+    struct MyObj {
+        id: i32,
+    }
+
+    struct Query;
+
+    #[Object]
+    impl Query {
+        #[graphql(entity)]
+        async fn find_obj(
+            &self,
+            vec_input: Vec<MyInputA>,
+            optional_input: Option<MyInputA>,
+            boxed_input: Box<MyInputA>,
+            arc_input: Arc<MyInputA>,
+        ) -> MyObj {
+            let _ = (vec_input, optional_input, boxed_input, arc_input);
+            MyObj { id: 0 }
+        }
+    }
+
+    let schema_sdl = Schema::new(Query, EmptyMutation, EmptySubscription)
+        .sdl_with_options(SDLExportOptions::new().federation());
+
+    assert!(
+        schema_sdl.contains(
+            r#"type MyObj @key(fields: "vecInput { a b { v } } optionalInput { a b { v } } boxedInput { a b { v } } arcInput { a b { v } }")"#
+        ),
+        "{schema_sdl}"
     );
 }
 
